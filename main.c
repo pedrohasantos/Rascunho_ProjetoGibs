@@ -121,11 +121,28 @@ void remover_no_dupla(NoDupla **lista, char c) {
     }
     free(temp);
 }
-
+void options(){
+    printf("1. Feijão\n2. Arroz\n3. batata\n");
+}
 int main() {
     NoSimples *listaSimples = NULL;
     NoDupla *listaDupla = NULL;
-    printf("Hello world!")
+    int ops;
+    do{
+        printf("Digite a opção que você gostaria: \n");
+        options();
+        scanf("%d",&ops);
+            switch(ops){
+                case 1:
+                case 2:
+                case 0:
+                    printf("Saindo...\n");
+                    break;
+                default:
+                    printf("Opção inválida, digite novamente sua opção: \n");
+            }
+    }while(ops!=0);
+    printf("Hello world!");
     
     return 0;
 }
