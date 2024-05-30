@@ -2,6 +2,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define coberto 0
+#define descoberto 1
+
+int jogo 1[2] [5] = {
+    1, 2, 3, 4, 5, 
+    6, 7, 8, 9, 0 
+        };//onde ficarão as cartas. depois ver como mudar para hashing
+
+int jogo 2[2] [5] = {
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0
+    }; //para saber se já foi descoberto ou não
+    
+void monta();
+void analiza();
+
+
 typedef struct NoDupla {
     char data;
     struct NoDupla *prox;
@@ -125,6 +142,13 @@ void options(){
     printf("1. Feijão\n2. Arroz\n3. batata\n");
 }
 int main() {
+
+    printf("\t BEM VINDO AO JOGO DA MEMÓRIA!");
+    //eu sei que criança não sabe ler, mas é só para ficar bonitinho
+    printf("Digite a opção que você gostaria: \n");
+    print("(1) JOGAR!\n");
+    printf("(2) SAIR!\n");
+    
     NoSimples *listaSimples = NULL;
     NoDupla *listaDupla = NULL;
     int ops;
