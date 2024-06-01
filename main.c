@@ -1,23 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
-#define coberto 0
-#define descoberto 1
-
-int jogo 1[2] [5] = {
-    1, 2, 3, 4, 5, 
-    6, 7, 8, 9, 0 
-        };//onde ficarão as cartas. depois ver como mudar para hashing
-
-int jogo 2[2] [5] = {
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0
-    }; //para saber se já foi descoberto ou não
-    
-void monta();
-void analiza();
-
+#define LINHAS 2
+#define COLUNAS 5
+#define PARES 5
 
 typedef struct NoDupla {
     char data;
@@ -138,27 +126,79 @@ void remover_no_dupla(NoDupla **lista, char c) {
     }
     free(temp);
 }
-void options(){
-    printf("1. Feijão\n2. Arroz\n3. batata\n");
+
+int hash_mod(int i){
+    return i % LINHAS * COLUNAS;
 }
+
+char vogais[] = {'A', 'E', 'I', 'O', 'U'};
+
+void iniciar_cartas(char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS]){
+    int i, j, k;
+    
+    for(i = 0; i < LINHAS; i++){
+        for(j = 0; j < COLUNAS; j++){
+            cartas[i][j] = '\0';
+            revelada[i][j] = false;
+        }
+    }
+    
+    for(i = 0; i < PARES; i++){
+        for(j = 0; j < COLUNAS; j++){
+            int pos;
+            do{
+                pos = hash_mod(rand());
+            } while (cartas[pos / LINHAS][pos % COLUNAS] != '\0');
+            
+            cartas[pos / LINHAS][pos % COLUNAS] = vogais[i];
+        }
+    }
+}
+
+void iniciar_jogo(char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS]){
+    int i, j;
+    printf("\n   ");
+    for (i = 0; i < COLUNAS; i++) {
+        printf(" %d ", i);
+    }
+    printf("\n");
+
+    for (i = 0; i < LINHAS; i++) {
+        printf(" %d ", i);
+        for (j = 0; j < COLUNAS; j++) {
+            if (revelada[i][j]) {
+                printf(" %c ", cartas[i][j]);
+            } else {
+                printf(" ? ");
+            }
+        }
+        printf("\n");
+    }
+}
+
 int main() {
 
-    printf("\t BEM VINDO AO JOGO DA MEMÓRIA!");
+    printf("\t BEM VINDO AO JOGO DA MEMÓRIA!\n");
     //eu sei que criança não sabe ler, mas é só para ficar bonitinho
-    printf("Digite a opção que você gostaria: \n");
-    print("(1) JOGAR!\n");
+    printf("(1) JOGAR!\n");
     printf("(2) SAIR!\n");
     
     NoSimples *listaSimples = NULL;
     NoDupla *listaDupla = NULL;
+    
+    char cartas[LINHAS][COLUNAS];
+    bool revelada[LINHAS][COLUNAS];
+    
     int ops;
     do{
-        printf("Digite a opção que você gostaria: \n");
-        options();
+        printf("Digite a opção que você gostaria: ");
         scanf("%d",&ops);
             switch(ops){
                 case 1:
+                    iniciar_jogo(cartas, revelada);
+                    break;
                 case 2:
+                    exit;
                 case 0:
                     printf("Saindo...\n");
                     break;
@@ -170,3 +210,4 @@ int main() {
     
     return 0;
 }
+
