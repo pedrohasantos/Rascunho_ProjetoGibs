@@ -18,6 +18,11 @@ typedef struct NoSimples {
     struct NoSimples *prox;
 } NoSimples;
 
+typedef struct NoCircular {
+    char data;
+    struct NoCircular *prox;
+} NoCircular;
+
 NoSimples *criarNo_Simples(char c) {
     NoSimples *novoNo = (NoSimples*)malloc(sizeof(NoSimples));
     if (novoNo == NULL) {
@@ -143,6 +148,7 @@ void iniciar_cartas(char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS]
         }
     }
     
+    
     for(i = 0; i < PARES; i++){
         for(j = 0; j < COLUNAS; j++){
             int pos;
@@ -175,7 +181,22 @@ void iniciar_jogo(char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS]){
         printf("\n");
     }
 }
-
+void resetar_jogo(char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS], NoCircular **listaCircular) {
+    iniciar_cartas(cartas, revelada);
+    *listaCircular = NULL; // Limpa a lista circular para novo jogo
+    for (int i = 0; i < LINHAS * COLUNAS; i++) {
+        inserir_fim_circular(listaCircular, '0'); // '0' representa um espaço vazio reiniciado
+    }
+}
+void imprimir_lista_circular(NoCircular *lista) {
+    if (lista == NULL) return;
+    NoCircular *temp = lista;
+    do {
+        printf("%c ", temp->data);
+        temp = temp->prox;
+    } while (temp != lista);
+    printf("\n");
+}
 int main() {
 
     printf("\t BEM VINDO AO JOGO DA MEMÓRIA!\n");
