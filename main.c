@@ -19,7 +19,8 @@ typedef struct NoSimples {
 } NoSimples;
 
 typedef struct NoCircular {
-    char data;
+    int linha;
+    int coluna;
     struct NoCircular *prox;
 } NoCircular;
 
@@ -43,6 +44,18 @@ NoDupla *criarNo_Dupla(char c) {
     novoNo->data = c;
     novoNo->prox = NULL;
     novoNo->ante = NULL;
+    return novoNo;
+}
+
+NoCircular *criarNo_Circular(int linha, int coluna) {
+    NoCircular *novoNo = (NoCircular*)malloc(sizeof(NoCircular));
+    if (novoNo == NULL) {
+        printf("Erro ao alocar memória.\n");
+        exit(1);
+    }
+    novoNo->linha = linha;
+    novoNo->coluna = coluna;
+    novoNo->prox = novoNo;
     return novoNo;
 }
 
@@ -73,6 +86,20 @@ void inserir_fim_dupla(NoDupla **lista, char c) {
     }
 }
 
+void inserir_fim_circular(NoCircular **lista, int linha, int coluna) {
+    NoCircular *novoNo = criarNo_Circular(linha, coluna);
+    if (*lista == NULL) {
+        *lista = novoNo;
+    } else {
+        NoCircular *temp = *lista;
+        while (temp->prox != *lista) {
+            temp = temp->prox;
+        }
+        temp->prox = novoNo;
+        novoNo->prox = *lista;
+    }
+}
+
 void imprimir_lista_simples(NoSimples *lista) {
     NoSimples *temp = lista;
     while (temp != NULL) {
@@ -90,6 +117,17 @@ void imprimir_lista_dupla(NoDupla *lista) {
     }
     printf("\n");
 }
+
+void imprimir_lista_circular(NoCircular *lista) {
+    if (lista == NULL) return;
+    NoCircular *temp = lista;
+    do {
+        printf("(%d, %d) ", temp->linha, temp->coluna);
+        temp = temp->prox;
+    } while (temp != lista);
+    printf("\n");
+}
+
 void remover_no_simples(NoSimples **lista, char c) {
     if (*lista == NULL) return;
 
@@ -133,7 +171,7 @@ void remover_no_dupla(NoDupla **lista, char c) {
 }
 
 int hash_mod(int i){
-    return i % LINHAS * COLUNAS;
+    return i % (LINHAS * COLUNAS);
 }
 
 char vogais[] = {'A', 'E', 'I', 'O', 'U'};
@@ -148,15 +186,14 @@ void iniciar_cartas(char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS]
         }
     }
     
-    
     for(i = 0; i < PARES; i++){
-        for(j = 0; j < COLUNAS; j++){
+        for(j = 0; j < 2; j++){
             int pos;
             do{
                 pos = hash_mod(rand());
-            } while (cartas[pos / LINHAS][pos % COLUNAS] != '\0');
+            } while (cartas[pos / COLUNAS][pos % COLUNAS] != '\0');
             
-            cartas[pos / LINHAS][pos % COLUNAS] = vogais[i];
+            cartas[pos / COLUNAS][pos % COLUNAS] = vogais[i];
         }
     }
 }
@@ -181,24 +218,36 @@ void iniciar_jogo(char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS]){
         printf("\n");
     }
 }
-void resetar_jogo(char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS], NoCircular **listaCircular) {
-    iniciar_cartas(cartas, revelada);
-    *listaCircular = NULL; // Limpa a lista circular para novo jogo
-    for (int i = 0; i < LINHAS * COLUNAS; i++) {
-        inserir_fim_circular(listaCircular, '0'); // '0' representa um espaço vazio reiniciado
+
+void checar_tentativas(NoCircular *tentativas, char cartas[LINHAS][COLUNAS], bool revelada[LINHAS][COLUNAS]) {
+    if (tentativas == NULL || tentativas->prox == tentativas) return; // Verifica se existem duas tentativas
+    
+    NoCircular *primeira = tentativas;
+    NoCircular *segunda = tentativas->prox;
+    
+    if (cartas[primeira->linha][primeira->coluna] == cartas[segunda->linha][segunda->coluna]) {
+        revelada[primeira->linha][primeira->coluna] = true;
+        revelada[segunda->linha][segunda->coluna] = true;
+        printf("Par encontrado!\n");
+    } else {
+        printf("Cartas diferentes. Tente novamente.\n");
     }
 }
-void imprimir_lista_circular(NoCircular *lista) {
-    if (lista == NULL) return;
-    NoCircular *temp = lista;
-    do {
-        printf("%c ", temp->data);
-        temp = temp->prox;
-    } while (temp != lista);
-    printf("\n");
-}
-int main() {
 
+void resetar_jogo(NoCircular **tentativas) {
+    if (*tentativas != NULL) {
+        NoCircular *temp = *tentativas;
+        NoCircular *proxNo;
+        do {
+            proxNo = temp->prox;
+            free(temp);
+            temp = proxNo;
+        } while (temp != *tentativas);
+        *tentativas = NULL;
+    }
+}
+
+int main() {
     printf("\t BEM VINDO AO JOGO DA MEMÓRIA!\n");
     //eu sei que criança não sabe ler, mas é só para ficar bonitinho
     printf("(1) JOGAR!\n");
@@ -210,25 +259,54 @@ int main() {
     char cartas[LINHAS][COLUNAS];
     bool revelada[LINHAS][COLUNAS];
     
-    int ops;
-    do{
-        printf("Digite a opção que você gostaria: ");
-        scanf("%d",&ops);
-            switch(ops){
-                case 1:
-                    iniciar_jogo(cartas, revelada);
-                    break;
-                case 2:
-                    exit;
-                case 0:
-                    printf("Saindo...\n");
-                    break;
-                default:
-                    printf("Opção inválida, digite novamente sua opção: \n");
-            }
-    }while(ops!=0);
-    printf("Hello world!");
+    int opsStart, opsJogo;
+    NoCircular *tentativas = NULL;
+    printf("Gostaria de jogar? (1 para sim, 2 para não): \n");
+    scanf("%d", &opsStart);
     
+    do {
+        switch(opsStart) {
+            case 1:
+                iniciar_cartas(cartas, revelada);
+                do {
+                    printf("Digite a opção que você gostaria:\n");
+                    printf("(1) Iniciar jogo\n");
+                    printf("(2) Fazer uma tentativa\n");
+                    printf("(0) Sair\n");
+                    scanf("%d", &opsJogo);
+                    int linha, coluna;
+                    switch(opsJogo) {
+                        case 1:
+                            iniciar_jogo(cartas, revelada);
+                            break;
+                        case 2:
+                            printf("Digite a linha e coluna da carta: ");
+                            scanf("%d %d", &linha, &coluna);
+                            inserir_fim_circular(&tentativas, linha, coluna);
+                            if (tentativas->prox != tentativas) {
+                                checar_tentativas(tentativas, cartas, revelada);
+                                resetar_jogo(&tentativas);
+                            }
+                            iniciar_jogo(cartas, revelada);
+                            break;
+                        case 0:
+                            printf("Saindo...\n");
+                            break;
+                        default:
+                            printf("Opção inválida, digite novamente sua opção: \n");
+                            break;
+                    }
+                } while(opsJogo != 0);
+                break;
+            case 2:
+                printf("Saindo...\n");
+                break;
+            default:
+                printf("Opção inválida, digite novamente sua opção: \n");
+                scanf("%d", &opsStart);
+                break;
+        }
+    } while(opsStart != 2);
+
     return 0;
 }
-
